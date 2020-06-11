@@ -1,0 +1,11 @@
+name: concurrent_queue
+description: A new Flutter package project.
+version: 0.0.1
+author:
+homepage:
+
+environment:
+  sdk: ">=2.7.0 <3.0.0"
+
+dev_dependencies:
+  test: ^1.14.7
