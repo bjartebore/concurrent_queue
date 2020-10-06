@@ -11,7 +11,7 @@ int randRange(int min, int max) => min + _random.nextInt(max - min);
 
 void main() {
   test('.add()', () async {
-    Options<PriorityQueue, IQueueOptions> options = Options();
+    PQueueOptions options = PQueueOptions();
     var queue = new PQueue(options);
 
     Future future = queue.add<int>(() async => 123);
@@ -23,7 +23,7 @@ void main() {
 
 
   test('.add() - limited concurrency',() async {
-    Options<PriorityQueue, IQueueOptions> options = Options()
+    PQueueOptions options = PQueueOptions()
       ..concurrency = 2;
     int fixture = 123;
     var queue = new PQueue(options);
@@ -48,7 +48,7 @@ void main() {
       [20, 200],
       [30, 100]
     ];
-    Options<PriorityQueue, IQueueOptions> options = Options()
+    PQueueOptions options = PQueueOptions()
       ..concurrency = 1;
     var queue = new PQueue(options);
 
@@ -66,7 +66,7 @@ void main() {
 
   test('.add() - concurrency: 5', () async {
     int concurrency = 5;
-    Options<PriorityQueue, IQueueOptions> options = Options()
+    PQueueOptions options = PQueueOptions()
       ..concurrency = 5;
     var queue = new PQueue(options);
     int running = 0;
@@ -88,7 +88,7 @@ void main() {
 
   test('.add() - update concurrency', () async {
     int concurrency = 5;
-        Options<PriorityQueue, IQueueOptions> options = Options()
+        PQueueOptions options = PQueueOptions()
       ..concurrency = concurrency;
     var queue = new PQueue(options);
 
@@ -117,7 +117,7 @@ void main() {
 
   test('.add() - priority', () async {
     List<int> result = <int>[];
-    Options<PriorityQueue, IQueueOptions> options = Options()
+    PQueueOptions options = PQueueOptions()
       ..concurrency = 1;
     var queue = new PQueue(options);
 
@@ -135,7 +135,7 @@ void main() {
 
   test('.onEmpty()', () async{
 
-    Options<PriorityQueue, IQueueOptions> options = Options()
+    PQueueOptions options = PQueueOptions()
       ..concurrency = 1;
     var queue = new PQueue(options);
 
@@ -165,7 +165,7 @@ void main() {
 
   test('async .onIdle', () async {
 
-    Options<PriorityQueue, IQueueOptions> options = Options()
+    PQueueOptions options = PQueueOptions()
       // ..autoStart = true
       ..concurrency = 2;
     var queue = new PQueue(options);

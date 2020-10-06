@@ -14,7 +14,7 @@ void empty() {}
 PriorityQueueOptions defaultOptions = PriorityQueueOptions(0);
 
 class PQueue {
-  PQueue(IOptions<PriorityQueue, IQueueOptions> options) : super() {
+  PQueue(IOptions options) : super() {
 
     _carryoverConcurrencyCount = options.carryoverConcurrencyCount;
     _isIntervalIgnored = options.intervalCap == double.infinity || options.interval == 0;

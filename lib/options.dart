@@ -1,19 +1,10 @@
-
-
 import 'queue.dart';
 
-abstract class IQueueAddOptions {
-
-}
-
-
-abstract class IQueueOptions extends IQueueAddOptions {}
-
-abstract class IQueueType extends IQueue<RunFunction, IQueueOptions> {}
+abstract class IQueueType extends IQueue<RunFunction, IOptions> {}
 
 typedef IQueueType QueueTypeFactory();
 
-abstract class IOptions<IQueueType, IQueueOptions> {
+abstract class IOptions {
   int concurrency;
 
   bool autoStart;
@@ -31,19 +22,18 @@ abstract class IOptions<IQueueType, IQueueOptions> {
   bool throwOnTimeout;
 }
 
-abstract class IDefaultAddOptions extends IQueueAddOptions {
-  int priority;
-}
-
-
-
-
-class Options<IQueueType, IQueueOptions> extends IOptions<IQueueType, IQueueOptions> {
-  Options() {
-    autoStart = true;
-    concurrency = 1<<32;
-    interval = Duration.zero;
-    intervalCap = 1<<32;
-    carryoverConcurrencyCount = false;
+class PQueueOptions extends IOptions {
+  PQueueOptions({
+    bool autoStart = true,
+    int concurrency = 1<<32,
+    Duration interval = Duration.zero,
+    int intervalCap = 1<<32,
+    bool carryoverConcurrencyCount = false,
+  }) {
+    autoStart = autoStart;
+    concurrency = concurrency;
+    interval = interval;
+    intervalCap = intervalCap;
+    carryoverConcurrencyCount = carryoverConcurrencyCount;
   }
 }

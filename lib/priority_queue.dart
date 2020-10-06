@@ -1,8 +1,7 @@
 import 'lower_bounds.dart';
-import 'options.dart';
 import 'queue.dart';
 
-abstract class IPriorityQueueOptions extends IQueueAddOptions {
+abstract class IPriorityQueueOptions {
   int priority; 
   RunFunction run;
 }
