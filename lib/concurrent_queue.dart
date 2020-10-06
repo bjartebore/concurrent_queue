@@ -171,7 +171,7 @@ class PQueue {
 
   Future add<TaskResultType>(
     Task<TaskResultType> task, { 
-      IPriorityQueueOptions options
+      PriorityQueueOptions options
     }) async {
 
     options ??= defaultOptions;

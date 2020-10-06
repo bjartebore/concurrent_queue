@@ -1,12 +1,7 @@
 import 'lower_bounds.dart';
 import 'queue.dart';
 
-abstract class IPriorityQueueOptions {
-  int priority; 
-  RunFunction run;
-}
-
-class PriorityQueueOptions implements IPriorityQueueOptions {
+class PriorityQueueOptions {
   PriorityQueueOptions(this.priority, { this.run });
   @override
   int priority;
@@ -15,26 +10,26 @@ class PriorityQueueOptions implements IPriorityQueueOptions {
   RunFunction run;
 }
 
-class PriorityQueue implements IQueue<RunFunction, IPriorityQueueOptions>{
+class PriorityQueue implements IQueue<RunFunction, PriorityQueueOptions>{
   @override
   int get size {
     return this._queue.length;
   }
 
-  List<IPriorityQueueOptions> _queue = <IPriorityQueueOptions>[];
+  List<PriorityQueueOptions> _queue = <PriorityQueueOptions>[];
 
   @override
   dequeue() {
-    IPriorityQueueOptions item = _queue.isNotEmpty ?  _queue.removeAt(0) : null;
+    PriorityQueueOptions item = _queue.isNotEmpty ?  _queue.removeAt(0) : null;
 		return item?.run;
   }
 
   @override
-  void enqueue(run, IPriorityQueueOptions options) {
+  void enqueue(run, PriorityQueueOptions options) {
     // ensure priority
     int priority = options.priority ?? 0;
 
-    IPriorityQueueOptions element = PriorityQueueOptions(
+    PriorityQueueOptions element = PriorityQueueOptions(
       priority,
       run: run,
     );
@@ -44,7 +39,7 @@ class PriorityQueue implements IQueue<RunFunction, IPriorityQueueOptions>{
       return;
     }
 
-    int index = lowerBound<IPriorityQueueOptions>(
+    int index = lowerBound<PriorityQueueOptions>(
       _queue, 
       element, 
       (a, b) => b.priority - a.priority);

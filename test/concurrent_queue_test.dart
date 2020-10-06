@@ -23,8 +23,9 @@ void main() {
 
 
   test('.add() - limited concurrency',() async {
-    PQueueOptions options = PQueueOptions()
-      ..concurrency = 2;
+    PQueueOptions options = PQueueOptions(
+      concurrency: 2,
+    );
     int fixture = 123;
     var queue = new PQueue(options);
     var promise = queue.add( () async => fixture);
@@ -48,8 +49,9 @@ void main() {
       [20, 200],
       [30, 100]
     ];
-    PQueueOptions options = PQueueOptions()
-      ..concurrency = 1;
+    PQueueOptions options = PQueueOptions(
+      concurrency: 1,
+    );
     var queue = new PQueue(options);
 
     Future<void> mapper (value) => queue.add(() async {
@@ -66,8 +68,9 @@ void main() {
 
   test('.add() - concurrency: 5', () async {
     int concurrency = 5;
-    PQueueOptions options = PQueueOptions()
-      ..concurrency = 5;
+    PQueueOptions options = PQueueOptions(
+      concurrency: 5,
+    );
     var queue = new PQueue(options);
     int running = 0;
 
@@ -88,8 +91,9 @@ void main() {
 
   test('.add() - update concurrency', () async {
     int concurrency = 5;
-        PQueueOptions options = PQueueOptions()
-      ..concurrency = concurrency;
+        PQueueOptions options = PQueueOptions(
+      concurrency: concurrency,
+    );
     var queue = new PQueue(options);
 
     
@@ -117,8 +121,10 @@ void main() {
 
   test('.add() - priority', () async {
     List<int> result = <int>[];
-    PQueueOptions options = PQueueOptions()
-      ..concurrency = 1;
+    PQueueOptions options = PQueueOptions(
+      concurrency: 1
+    );
+
     var queue = new PQueue(options);
 
     queue.add(() async => result.add(1), options: PriorityQueueOptions(1) );
@@ -135,8 +141,9 @@ void main() {
 
   test('.onEmpty()', () async{
 
-    PQueueOptions options = PQueueOptions()
-      ..concurrency = 1;
+    PQueueOptions options = PQueueOptions(
+      concurrency: 1
+    );
     var queue = new PQueue(options);
 
 
@@ -165,9 +172,9 @@ void main() {
 
   test('async .onIdle', () async {
 
-    PQueueOptions options = PQueueOptions()
-      // ..autoStart = true
-      ..concurrency = 2;
+    PQueueOptions options = PQueueOptions(
+      concurrency: 2,
+    );
     var queue = new PQueue(options);
 
     List<int> result = [];

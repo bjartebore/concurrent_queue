@@ -4,22 +4,34 @@ abstract class IQueueType extends IQueue<RunFunction, IOptions> {}
 
 typedef IQueueType QueueTypeFactory();
 
+
 abstract class IOptions {
-  int concurrency;
+  IOptions({
+    this.concurrency,
+    this.autoStart,
+    this.queueClass,
+    this.intervalCap,
+    this.interval,
+    this.carryoverConcurrencyCount,
+    this.timeout,
+    this.throwOnTimeout,
+  });
+  
+  final int concurrency;
 
-  bool autoStart;
+  final bool autoStart;
 
-  QueueTypeFactory queueClass;
+  final QueueTypeFactory queueClass;
 
-  int intervalCap;
+  final int intervalCap;
 
-  Duration interval;
+  final Duration interval;
 
-  bool carryoverConcurrencyCount;
+  final bool carryoverConcurrencyCount;
 
-  Duration timeout;
+  final Duration timeout;
 
-  bool throwOnTimeout;
+  final bool throwOnTimeout;
 }
 
 class PQueueOptions extends IOptions {
@@ -29,11 +41,11 @@ class PQueueOptions extends IOptions {
     Duration interval = Duration.zero,
     int intervalCap = 1<<32,
     bool carryoverConcurrencyCount = false,
-  }) {
-    autoStart = autoStart;
-    concurrency = concurrency;
-    interval = interval;
-    intervalCap = intervalCap;
-    carryoverConcurrencyCount = carryoverConcurrencyCount;
-  }
+  }): super(
+    autoStart: autoStart,
+    concurrency: concurrency,
+    interval: interval,
+    intervalCap: intervalCap,
+    carryoverConcurrencyCount: carryoverConcurrencyCount,
+  );
 }
