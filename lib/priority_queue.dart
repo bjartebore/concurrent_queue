@@ -3,10 +3,9 @@ import 'queue.dart';
 
 class PriorityQueueOptions {
   PriorityQueueOptions(this.priority, { this.run });
-  @override
+
   int priority;
 
-  @override
   RunFunction run;
 }
 
