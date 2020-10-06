@@ -163,6 +163,30 @@ void main() {
     expect(queue.size, equals(0));
   });
 
+  test('async .onIdle', () async {
+
+    Options<PriorityQueue, IQueueOptions> options = Options()
+      // ..autoStart = true
+      ..concurrency = 2;
+    var queue = new PQueue(options);
+
+    List<int> result = [];
+
+    for (int i = 0; i < 4; i += 1) {
+      queue.add(() async {
+        await Future.delayed(Duration(milliseconds: 60));
+        result.add(i);
+      });
+    }
+
+    queue.start();
+
+    await queue.onIdle();
+    expect(result.length, equals(4));
+    expect(result, equals([0,1,2,3]));
+    expect(queue.size, equals(0));
+  });
+
 }
 
 
