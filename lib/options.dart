@@ -41,11 +41,15 @@ class PQueueOptions extends IOptions {
     Duration interval = Duration.zero,
     int intervalCap = 1<<32,
     bool carryoverConcurrencyCount = false,
+    Duration timeout = Duration.zero,
+    bool throwOnTimeout = false,
   }): super(
     autoStart: autoStart,
     concurrency: concurrency,
     interval: interval,
     intervalCap: intervalCap,
     carryoverConcurrencyCount: carryoverConcurrencyCount,
+    throwOnTimeout: throwOnTimeout,
+    timeout: timeout,
   );
 }

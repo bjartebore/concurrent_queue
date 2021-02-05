@@ -1,6 +1,7 @@
 library concurrent_queue;
 
 import 'dart:async';
+import 'dart:math';
 
 import 'options.dart';
 import 'priority_queue.dart';
@@ -15,9 +16,10 @@ PriorityQueueOptions defaultOptions = PriorityQueueOptions(0);
 
 class PQueue {
   PQueue(IOptions options) : super() {
-
     _carryoverConcurrencyCount = options.carryoverConcurrencyCount;
-    _isIntervalIgnored = options.intervalCap == double.infinity || options.interval == 0;
+    _isIntervalIgnored = options.intervalCap == double.infinity || options.interval == Duration.zero;
+    _timeout = options.timeout;
+    _throwOnTimeout = options.throwOnTimeout;
     _intervalCap = options.intervalCap;
     _interval = options.interval;
     _queue = PriorityQueue();
@@ -32,6 +34,10 @@ class PQueue {
   int _intervalCount = 0;
 
   int _intervalCap;
+
+  Duration _timeout;
+
+  bool _throwOnTimeout;
 
   Duration _interval;
 
@@ -62,7 +68,7 @@ class PQueue {
 	}
 
   void _next() {
-    _pendingCount--;
+    _pendingCount -= 1;
     _tryToStartAnother();
   }
 
@@ -88,16 +94,14 @@ class PQueue {
 
 		if (_intervalId == null) {
 			var delay = _intervalEnd != null ? _intervalEnd.difference(now) : Duration.zero;
-			if (delay.inMilliseconds < 0) {
+			if (delay.inMilliseconds <= 0) {
 				// Act as the interval was done
 				// We don't need to resume it here because it will be resumed on line 160
 				_intervalCount = (_carryoverConcurrencyCount) ? _pendingCount : 0;
 			} else {
 				// Act as the interval is pending
 				if (_timeoutId == null) {
-          _timeoutId = Timer(delay, () {
-            _onResumeInterval();
-          });
+          _timeoutId = Timer(delay, _onResumeInterval);
 				}
 
 				return true;
@@ -121,8 +125,14 @@ class PQueue {
       bool canInitializeInterval = !_isIntervalPaused();
       if (_doesIntervalAllowAnother && _doesConcurrentAllowAnother) {
         //this.emit('active');
-        _queue.dequeue()();
+        final job = _queue.dequeue();
 				
+        if (job == null) {
+          return false;
+        }
+
+        job();
+
 				if (canInitializeInterval) {
 					_initializeIntervalIfNeeded();
 				}
@@ -152,7 +162,10 @@ class PQueue {
       _intervalId = null;
 		}
 
-		_intervalCount = _carryoverConcurrencyCount ? _pendingCount : 0;
+		_intervalCount = _carryoverConcurrencyCount
+      ? _pendingCount 
+      : 0;
+
 		_processQueue();
   }
 
@@ -169,20 +182,45 @@ class PQueue {
     _processQueue();
   }
 
-  Future add<TaskResultType>(
-    Task<TaskResultType> task, { 
+  Future<List<T>> addAll<T>(
+    List<Task<T>> tasks, { 
+      PriorityQueueOptions options
+    }
+  ) {
+    final waitFor = tasks.map((task) {
+      return add(task, options: options);
+    }).toList();
+
+    return Future.wait(waitFor);
+  }
+
+  Future<T> add<T>(
+    Task<T> task, { 
       PriorityQueueOptions options
     }) async {
 
     options ??= defaultOptions;
 
-    Completer c = Completer();
+    final c = Completer<T>();
     _queue.enqueue(() async {
-      _pendingCount++;
-      _intervalCount++;
+      _pendingCount += 1;
+      _intervalCount += 1;
 
       try {
-        c.complete(await task());
+        final operation = (_timeout == Duration.zero) 
+          ? task() 
+          : task().timeout(_timeout, 
+            onTimeout: () {
+              if (_throwOnTimeout) {
+                throw TimeoutException('task timed out');
+              }
+              return null;
+            }
+          );
+
+        c.complete(await operation);
+      } on TimeoutException catch (error) {
+        c.completeError(error);
       } catch (error) {
         c.completeError(error);
       } finally {
@@ -256,4 +294,10 @@ class PQueue {
   bool get isPaused {
     return _isPaused;
   }
+
+  set timeout(Duration timeout) {
+    _timeout = timeout;
+  }
+
+  Duration get timeout => _timeout;
 } 

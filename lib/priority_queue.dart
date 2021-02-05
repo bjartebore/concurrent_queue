@@ -18,12 +18,6 @@ class PriorityQueue implements IQueue<RunFunction, PriorityQueueOptions>{
   List<PriorityQueueOptions> _queue = <PriorityQueueOptions>[];
 
   @override
-  dequeue() {
-    PriorityQueueOptions item = _queue.isNotEmpty ?  _queue.removeAt(0) : null;
-		return item?.run;
-  }
-
-  @override
   void enqueue(run, PriorityQueueOptions options) {
     // ensure priority
     int priority = options.priority ?? 0;
@@ -44,6 +38,13 @@ class PriorityQueue implements IQueue<RunFunction, PriorityQueueOptions>{
       (a, b) => b.priority - a.priority);
 
     _queue.insert(index, element);
+  }
+
+
+  @override
+  dequeue() {
+    PriorityQueueOptions item = _queue.isNotEmpty ?  _queue.removeAt(0) : null;
+		return item?.run;
   }
 
   @override
