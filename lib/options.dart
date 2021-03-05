@@ -7,21 +7,21 @@ typedef IQueueType QueueTypeFactory();
 
 abstract class IOptions {
   IOptions({
-    this.concurrency,
-    this.autoStart,
+    required this.concurrency,
+    required this.autoStart,
     this.queueClass,
-    this.intervalCap,
-    this.interval,
-    this.carryoverConcurrencyCount,
-    this.timeout,
-    this.throwOnTimeout,
+    required this.intervalCap,
+    required this.interval,
+    required this.carryoverConcurrencyCount,
+    required this.timeout,
+    required this.throwOnTimeout,
   });
   
   final int concurrency;
 
   final bool autoStart;
 
-  final QueueTypeFactory queueClass;
+  final QueueTypeFactory? queueClass;
 
   final int intervalCap;
 
