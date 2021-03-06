@@ -1,7 +1,6 @@
 library concurrent_queue;
 
 import 'dart:async';
-
 import 'priority_queue.dart';
 
 export 'priority_queue.dart';
@@ -70,8 +69,8 @@ class ConcurrentQueue {
   }
 
   bool get _doesConcurrentAllowAnother {
-		return _pendingCount < _concurrency;
-	}
+    return _pendingCount < _concurrency;
+  }
 
   void _next() {
     _pendingCount -= 1;
@@ -98,23 +97,23 @@ class ConcurrentQueue {
   bool _isIntervalPaused() {
     DateTime now = DateTime.now();
 
-		if (_intervalId == null) {
-			var delay = _intervalEnd != null ? _intervalEnd!.difference(now) : Duration.zero;
-			if (delay.inMilliseconds <= 0) {
-				// Act as the interval was done
-				// We don't need to resume it here because it will be resumed on line 160
-				_intervalCount = (_carryoverConcurrencyCount) ? _pendingCount : 0;
-			} else {
-				// Act as the interval is pending
-				if (_timeoutId == null) {
+    if (_intervalId == null) {
+      var delay = _intervalEnd != null ? _intervalEnd!.difference(now) : Duration.zero;
+      if (delay.inMilliseconds <= 0) {
+        // Act as the interval was done
+        // We don't need to resume it here because it will be resumed on line 160
+        _intervalCount = (_carryoverConcurrencyCount) ? _pendingCount : 0;
+      } else {
+        // Act as the interval is pending
+        if (_timeoutId == null) {
           _timeoutId = Timer(delay, _onResumeInterval);
-				}
+        }
 
-				return true;
-			}
-		}
+        return true;
+      }
+    }
 
-		return false;
+    return false;
   }
 
   bool _tryToStartAnother() {
@@ -139,11 +138,11 @@ class ConcurrentQueue {
 
         job();
 
-				if (canInitializeInterval) {
-					_initializeIntervalIfNeeded();
-				}
+        if (canInitializeInterval) {
+          _initializeIntervalIfNeeded();
+        }
 
-				return true;
+        return true;
       }
     }
     return false;
@@ -151,14 +150,14 @@ class ConcurrentQueue {
 
   void _initializeIntervalIfNeeded() {
     if (_isIntervalIgnored || _intervalId != null) {
-			return;
-		}
+      return;
+    }
     _intervalId = Timer.periodic(_interval, (timer) {
       _onInterval();
     });
 
 
-		_intervalEnd = DateTime.now().add(_interval);
+    _intervalEnd = DateTime.now().add(_interval);
   }
 
   void _onInterval() {
@@ -166,13 +165,13 @@ class ConcurrentQueue {
     if (_intervalCount == 0 && _pendingCount == 0 && _intervalId != null) {
       _intervalId!.cancel();
       _intervalId = null;
-		}
+    }
 
-		_intervalCount = _carryoverConcurrencyCount
+    _intervalCount = _carryoverConcurrencyCount
       ? _pendingCount
       : 0;
 
-		_processQueue();
+    _processQueue();
   }
 
   void _processQueue() {
@@ -267,13 +266,13 @@ class ConcurrentQueue {
   Future<void> onEmpty() {
     Completer c = Completer();
     if (_queue.size == 0) {
-			c.complete();
-		} else {
+      c.complete();
+    } else {
       var existingResolve = _resolveEmpty;
-			_resolveEmpty = () {
-				existingResolve();
-				c.complete();
-			};
+      _resolveEmpty = () {
+        existingResolve();
+        c.complete();
+      };
     }
     return c.future;
   }
@@ -281,12 +280,12 @@ class ConcurrentQueue {
   Future<void> onIdle() {
     Completer c = Completer();
     if (_pendingCount == 0 && _queue.size == 0) {
-			c.complete();
-		} else {
+      c.complete();
+    } else {
       var existingResolve = _resolveIdle;
       _resolveIdle = () {
         existingResolve();
-				c.complete();
+        c.complete();
       };
     }
 

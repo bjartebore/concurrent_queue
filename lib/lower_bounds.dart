@@ -1,6 +1,6 @@
 // Port of lower_bound from https://en.cppreference.com/w/cpp/algorithm/lower_bound
 // Used to compute insertion index to keep queue sorted after insertion
-typedef int Comparator<T>(T a , T b); 
+typedef int Comparator<T>(T a , T b);
 
 int lowerBound<T>( List<T> array, T value, Comparator comparator) {
   int first = 0;
