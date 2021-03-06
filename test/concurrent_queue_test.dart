@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:test/test.dart';
-import 'package:concurrent_queue/options.dart';
-import 'package:concurrent_queue/priority_queue.dart';
 import 'package:concurrent_queue/concurrent_queue.dart';
 
 final _random = new Random();
@@ -16,8 +14,7 @@ Future delay(int milliseconds) async => Future.delayed(Duration(milliseconds: mi
 
 void main() {
   test('.add()', () async {
-    PQueueOptions options = PQueueOptions();
-    var queue = new PQueue(options);
+    var queue = new ConcurrentQueue();
 
     Future future = queue.add<int>(() async => 123);
 
@@ -27,11 +24,10 @@ void main() {
   });
 
   test('.add() - limited concurrency',() async {
-    PQueueOptions options = PQueueOptions(
-      concurrency: 2,
-    );
     int fixture = 123;
-    var queue = new PQueue(options);
+    var queue = new ConcurrentQueue(
+      concurrency: 2
+    );
     var promise = queue.add( () async => fixture);
     var promise2 = queue.add(() async {
       await Future.delayed(Duration(milliseconds: 300));
@@ -53,10 +49,7 @@ void main() {
       [20, 200],
       [30, 100]
     ];
-    PQueueOptions options = PQueueOptions(
-      concurrency: 1,
-    );
-    var queue = new PQueue(options);
+    var queue = new ConcurrentQueue(concurrency: 1);
 
     Future<void> mapper (value) => queue.add(() async {
       await Future.delayed(Duration( milliseconds: value[1]));
@@ -71,13 +64,10 @@ void main() {
 
   test('.add() - concurrency: 5', () async {
     int concurrency = 5;
-    PQueueOptions options = PQueueOptions(
-      concurrency: 5,
-    );
-    var queue = new PQueue(options);
+    var queue = new ConcurrentQueue(concurrency: 5);
     int running = 0;
 
-    
+
     var input = List.filled(100, 0).map((val) async {
       queue.add(() async {
         running++;
@@ -93,12 +83,12 @@ void main() {
 
   test('.add() - update concurrency', () async {
     int concurrency = 5;
-        PQueueOptions options = PQueueOptions(
-      concurrency: concurrency,
-    );
-    var queue = new PQueue(options);
 
-    
+    var queue = new ConcurrentQueue(
+      concurrency: concurrency
+    );
+
+
     int running = 0;
 
     var input = List.filled(100, 0).asMap().keys.map((index) async => queue.add(() async {
@@ -122,18 +112,15 @@ void main() {
 
   test('.add() - priority', () async {
     List<int> result = <int>[];
-    PQueueOptions options = PQueueOptions(
-      concurrency: 1
-    );
 
-    var queue = new PQueue(options);
+    var queue = new ConcurrentQueue(concurrency: 1);
 
-    queue.add(() async => result.add(1), options: PriorityQueueOptions(1) );
-    queue.add(() async => result.add(0), options: PriorityQueueOptions(0));
-    queue.add(() async => result.add(1), options: PriorityQueueOptions(1));
-    queue.add(() async => result.add(2), options: PriorityQueueOptions(1));
-    queue.add(() async => result.add(3), options: PriorityQueueOptions(2));
-    queue.add(() async => result.add(0), options: PriorityQueueOptions(-1));
+    queue.add(() async => result.add(1), priority: 1);
+    queue.add(() async => result.add(0), priority: 0);
+    queue.add(() async => result.add(1), priority: 1);
+    queue.add(() async => result.add(2), priority: 1);
+    queue.add(() async => result.add(3), priority: 2);
+    queue.add(() async => result.add(0), priority: -1);
     await queue.onEmpty();
 
     expect(result, equals([1, 3, 1, 2, 0, 0]));
@@ -141,12 +128,7 @@ void main() {
 
   test('.onEmpty()', () async{
 
-    PQueueOptions options = PQueueOptions(
-      concurrency: 1
-    );
-    var queue = new PQueue(options);
-
-
+    var queue = new ConcurrentQueue(concurrency: 1);
 
     queue.add(() async => 0);
     queue.add(() async => 0);
@@ -171,11 +153,9 @@ void main() {
   });
 
   test('async .onIdle', () async {
-
-    PQueueOptions options = PQueueOptions(
-      concurrency: 2,
+    var queue = new ConcurrentQueue(
+      concurrency: 2
     );
-    var queue = new PQueue(options);
 
     List<int> result = [];
 
@@ -195,18 +175,16 @@ void main() {
   });
 
   test('.onIdle() - no pending', () async {
-    PQueueOptions options = PQueueOptions();
-    var queue = new PQueue(options);  
+    var queue = new ConcurrentQueue();
     expect(queue.size, equals(0));
     expect(queue.pending, equals(0));
   });
 
 
   test('.clear()', () async {
-    PQueueOptions options = PQueueOptions(
+    var queue = new ConcurrentQueue(
       concurrency: 2,
     );
-    var queue = new PQueue(options);
     queue.add(() async => delay(20000));
     queue.add(() async => delay(20000));
     queue.add(() async => delay(20000));
@@ -221,7 +199,7 @@ void main() {
   });
 
   test('.addAll()', () async {
-    final queue = PQueue(PQueueOptions());
+    final queue = ConcurrentQueue();
     final fn = () async => fixture;
     final functions = [fn, fn];
     final promise = queue.addAll(functions);
@@ -231,7 +209,7 @@ void main() {
   });
 
   test('autoStart: false', () async {
-    final queue = PQueue(PQueueOptions( concurrency: 2, autoStart: false));
+    final queue = ConcurrentQueue(concurrency: 2, autoStart: false);
     queue.add(() async => delay(20000));
     queue.add(() async => delay(20000));
     queue.add(() async => delay(20000));
@@ -250,7 +228,7 @@ void main() {
   });
 
   test('.start() - return this', () async {
-    final queue = PQueue(PQueueOptions( concurrency: 2, autoStart: false));
+    final queue = ConcurrentQueue(concurrency: 2, autoStart: false);
 
     queue.add(() async => delay(100));
     queue.add(() async => delay(100));
@@ -263,7 +241,7 @@ void main() {
   });
 
   test('.start() - not paused', () async  {
-    final queue = PQueue(PQueueOptions());
+    final queue = ConcurrentQueue();
     expect(queue.isPaused, false);
 
     queue.start();
@@ -272,9 +250,9 @@ void main() {
   });
 
   test('.pause()', () {
-    final queue = PQueue(PQueueOptions(
+    final queue = ConcurrentQueue(
       concurrency: 2,
-    ));
+    );
 
     queue.pause();
     queue.add(() async => delay(20000));
@@ -307,7 +285,7 @@ void main() {
   });
 
   test('.add() async mixed tasks', () async {
-    final queue = PQueue(PQueueOptions( concurrency: 1));
+    final queue = ConcurrentQueue(concurrency: 1);
     queue.add(() async => 'sync 1');
     queue.add(() async => delay(1000));
     queue.add(() async => 'sync 2');
@@ -320,7 +298,7 @@ void main() {
   });
 
   test('.add() - handle task promise failure', () async {
-    final queue = PQueue(PQueueOptions(concurrency: 1));
+    final queue = ConcurrentQueue(concurrency: 1);
 
     expect(() async {
       await queue.add(() async {
@@ -339,7 +317,7 @@ void main() {
   });
 
   test('.addAll() sync/async mixed tasks', () async {
-    final queue = new PQueue(PQueueOptions());
+    final queue = new ConcurrentQueue();
 
     final functions  = [
       () async => 'sync 1',
@@ -357,7 +335,7 @@ void main() {
 
 
   test('should resolve empty when size is zero', () async {
-    final queue = PQueue(PQueueOptions(concurrency: 1, autoStart: false));
+    final queue = ConcurrentQueue(concurrency: 1, autoStart: false);
 
     // It should take 1 seconds to resolve all tasks
     for (int index = 0; index < 100; index++) {
@@ -383,11 +361,11 @@ void main() {
 
   test('.add() - throttled', () async {
     final result = <int>[];
-    final queue = PQueue(PQueueOptions(
+    final queue = ConcurrentQueue(
       intervalCap: 1,
       interval: Duration(milliseconds: 500),
       autoStart: false
-    ));
+    );
     queue.add(() async {
       result.add(1);
     });
@@ -406,12 +384,12 @@ void main() {
 
   test('.add() - throttled, carryoverConcurrencyCount false', () async {
     final result = <int>[];
-    final queue = PQueue(PQueueOptions(
-        intervalCap: 1,
-        carryoverConcurrencyCount: false,
-        interval: Duration(milliseconds: 500),
-        autoStart: false
-      ));
+    final queue = ConcurrentQueue(
+      intervalCap: 1,
+      carryoverConcurrencyCount: false,
+      interval: Duration(milliseconds: 500),
+      autoStart: false
+    );
 
     const values = [0, 1];
     values.forEach((value) => queue.add(() async {
@@ -445,12 +423,12 @@ void main() {
 
   test('.add() - throttled, carryoverConcurrencyCount true', () async {
     final result = <int>[];
-    final queue = PQueue(PQueueOptions(
-        intervalCap: 1,
-        carryoverConcurrencyCount: true,
-        interval: Duration(milliseconds: 500),
-        autoStart: false
-      ));
+    final queue = ConcurrentQueue(
+      intervalCap: 1,
+      carryoverConcurrencyCount: true,
+      interval: Duration(milliseconds: 500),
+      autoStart: false
+    );
 
     const values = <int>[0, 1];
 
@@ -490,12 +468,12 @@ void main() {
 
   test('.add() - throttled 10, concurrency 5', () async {
     final result = <int>[];
-    final queue = PQueue(PQueueOptions(
+    final queue = ConcurrentQueue(
       concurrency: 5,
       intervalCap: 10,
       interval: Duration(milliseconds: 1000),
       autoStart: false
-      ));
+    );
 
     final firstValue = [for(var i=0; i<5; i+=1) i];
     final secondValue = [for(var i=0; i<10; i+=1) i];
@@ -513,7 +491,7 @@ void main() {
 
     (() async {
       await delay(400);
-      
+
       expect(result, equals(firstValue));
       expect(queue.pending, 5);
     })();
@@ -536,12 +514,12 @@ void main() {
 
   test('.add() - throttled finish and resume', () async {
     final result = <int>[];
-    final queue = PQueue(PQueueOptions(
+    final queue = ConcurrentQueue(
       concurrency: 1,
       intervalCap: 2,
       interval: Duration(milliseconds: 2000),
       autoStart: false
-    ));
+    );
 
     const values = [0, 1];
     const firstValue = [0, 1];
@@ -575,12 +553,12 @@ void main() {
 
   test('pause should work when throttled', () async {
     final result = <int>[];
-    final queue = PQueue(PQueueOptions(
+    final queue = ConcurrentQueue(
       concurrency: 2,
       intervalCap: 2,
       interval: Duration(milliseconds: 1000),
       autoStart: false
-    ));
+    );
 
     const values = 	[0, 1, 2, 3];
     const firstValue = 	[0, 1];
@@ -622,10 +600,10 @@ void main() {
   });
 
   test('clear interval on pause', () async {
-    final queue = PQueue(PQueueOptions(
+    final queue = ConcurrentQueue(
       intervalCap: 2,
       interval: Duration(milliseconds: 100),
-    ));
+    );
 
     queue.add(() async {
       queue.pause();
@@ -639,10 +617,10 @@ void main() {
   });
 
   test('should verify timeout overrides passed to add', () async {
-    final queue = PQueue(PQueueOptions(
+    final queue = ConcurrentQueue(
       throwOnTimeout: true,
       timeout: Duration(milliseconds: 200),
-    ));
+    );
 
     expect(() => queue.add(() async {
       await delay(400);

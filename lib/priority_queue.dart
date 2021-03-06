@@ -1,29 +1,27 @@
 import 'lower_bounds.dart';
 import 'queue.dart';
 
-class PriorityQueueOptions
+class _PriorityQueueOptions
  {
-  PriorityQueueOptions(this.priority, { this.run });
+  _PriorityQueueOptions(this.priority, { this.run });
 
   int priority;
 
   RunFunction? run;
 }
 
-class PriorityQueue implements IQueue<RunFunction?, PriorityQueueOptions>{
+class PriorityQueue implements IQueue<RunFunction?, _PriorityQueueOptions>{
   @override
   int get size {
     return this._queue.length;
   }
 
-  List<PriorityQueueOptions> _queue = <PriorityQueueOptions>[];
+  List<_PriorityQueueOptions> _queue = <_PriorityQueueOptions>[];
 
   @override
-  void enqueue(run, PriorityQueueOptions options) {
-    // ensure priority
-    int priority = options.priority;
+  void enqueue(run, { int priority = 0 }) {
 
-    PriorityQueueOptions element = PriorityQueueOptions(
+    _PriorityQueueOptions element = _PriorityQueueOptions(
       priority,
       run: run,
     );
@@ -33,7 +31,7 @@ class PriorityQueue implements IQueue<RunFunction?, PriorityQueueOptions>{
       return;
     }
 
-    int index = lowerBound<PriorityQueueOptions>(
+    int index = lowerBound<_PriorityQueueOptions>(
       _queue,
       element,
       (a, b) => b.priority - a.priority);
@@ -44,13 +42,13 @@ class PriorityQueue implements IQueue<RunFunction?, PriorityQueueOptions>{
 
   @override
   dequeue() {
-    PriorityQueueOptions? item = _queue.isNotEmpty ?  _queue.removeAt(0) : null;
+    _PriorityQueueOptions? item = _queue.isNotEmpty ?  _queue.removeAt(0) : null;
 		return item?.run;
   }
 
   @override
-  List<RunFunction?> filter(options) {
-    return this._queue.where((element) => element.priority == options.priority).map((e) => e.run) as List<Future<dynamic> Function()?>;
+  List<RunFunction?> filter(int priority) {
+    return this._queue.where((element) => element.priority == priority).map((e) => e.run) as List<Future<dynamic> Function()?>;
   }
 
 }
