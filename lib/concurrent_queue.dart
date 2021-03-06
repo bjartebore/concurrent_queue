@@ -2,8 +2,9 @@ library concurrent_queue;
 
 import 'dart:async';
 
-import 'options.dart';
 import 'priority_queue.dart';
+
+export 'priority_queue.dart';
 
 typedef Future<T> Task<T>();
 
@@ -11,34 +12,40 @@ typedef void ResolveFunction<T>();
 
 void empty() {}
 
-PriorityQueueOptions defaultOptions = PriorityQueueOptions(0);
+class ConcurrentQueue {
 
-class PQueue {
-  PQueue(IOptions options) :
-    _carryoverConcurrencyCount = options.carryoverConcurrencyCount,
-    _isIntervalIgnored = options.intervalCap == double.infinity || options.interval == Duration.zero,
-    _timeout = options.timeout,
-    _throwOnTimeout = options.throwOnTimeout,
-    _intervalCap = options.intervalCap,
-    _interval = options.interval,
+  ConcurrentQueue({
+    bool autoStart = true,
+    int concurrency = 1<<32,
+    Duration interval = Duration.zero,
+    int intervalCap = 1<<32,
+    bool carryoverConcurrencyCount = false,
+    Duration timeout = Duration.zero,
+    bool throwOnTimeout = false,
+  }) :
+    _carryoverConcurrencyCount = carryoverConcurrencyCount,
+    _isIntervalIgnored = intervalCap == double.infinity || interval == Duration.zero,
+    _timeout = timeout,
+    _throwOnTimeout = throwOnTimeout,
+    _intervalCap = intervalCap,
+    _interval = interval,
     _queue = PriorityQueue(),
-    _concurrency = options.concurrency,
-    _isPaused = options.autoStart == false,
-   super();
+    _concurrency = concurrency,
+    _isPaused = autoStart == false;
 
-  late bool _carryoverConcurrencyCount;
+  final bool _carryoverConcurrencyCount;
 
-  late bool _isIntervalIgnored;
+  final bool _isIntervalIgnored;
 
   int _intervalCount = 0;
 
-  late int _intervalCap;
+  final int _intervalCap;
 
   Duration? _timeout;
 
-  late bool _throwOnTimeout;
+  final bool _throwOnTimeout;
 
-  late Duration _interval;
+  final Duration _interval;
 
   DateTime? _intervalEnd;
 
@@ -181,13 +188,19 @@ class PQueue {
     _processQueue();
   }
 
+  set timeout(Duration timeout) {
+    _timeout = timeout;
+  }
+
+  Duration get timeout => _timeout!;
+
   Future<List<T>> addAll<T>(
     List<Task<T>> tasks, {
-      PriorityQueueOptions? options
+      int priority = 0,
     }
   ) {
     final waitFor = tasks.map((task) {
-      return add(task, options: options);
+      return add(task, priority: priority);
     }).toList();
 
     return Future.wait(waitFor);
@@ -195,10 +208,8 @@ class PQueue {
 
   Future<T> add<T>(
     Task<T> task, {
-      PriorityQueueOptions? options
+      int priority = 0,
     }) async {
-
-    options ??= defaultOptions;
 
     final c = Completer<T>();
     _queue.enqueue(() async {
@@ -226,13 +237,13 @@ class PQueue {
         _next();
       }
 
-    }, options);
+    }, priority: priority);
     _tryToStartAnother();
     return c.future;
   }
 
 
-  PQueue start() {
+  ConcurrentQueue start() {
 
     if (!_isPaused) {
       return this;
@@ -294,9 +305,4 @@ class PQueue {
     return _isPaused;
   }
 
-  set timeout(Duration timeout) {
-    _timeout = timeout;
-  }
-
-  Duration get timeout => _timeout!;
 }

@@ -1,8 +1,10 @@
 typedef Future<dynamic> RunFunction();
 
-abstract class IQueue<IElement, IOptions> {
+abstract class IQueue<IRunFunction, IOptions> {
   int get size;
-  List<IElement> filter(IOptions options);
-  IElement dequeue();
-  void enqueue(IElement run, IOptions options);
+  List<IRunFunction> filter(int priority);
+  IRunFunction dequeue();
+  void enqueue(IRunFunction run, {
+    int priority
+  });
 }
