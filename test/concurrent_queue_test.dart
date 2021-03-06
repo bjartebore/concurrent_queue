@@ -560,8 +560,8 @@ void main() {
       autoStart: false
     );
 
-    const values = 	[0, 1, 2, 3];
-    const firstValue = 	[0, 1];
+    const values = [0, 1, 2, 3];
+    const firstValue = [0, 1];
     const secondValue = [0, 1, 2, 3];
 
     values.forEach((value) => queue.add(() async {

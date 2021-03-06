@@ -43,7 +43,7 @@ class PriorityQueue implements IQueue<RunFunction?, _PriorityQueueOptions>{
   @override
   dequeue() {
     _PriorityQueueOptions? item = _queue.isNotEmpty ?  _queue.removeAt(0) : null;
-		return item?.run;
+    return item?.run;
   }
 
   @override
