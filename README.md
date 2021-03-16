@@ -104,35 +104,3 @@ $ node example.js
 11. Resolved 🐙
 12. All work is done
 ```
-
-## Custom QueueClass
-
-For implementing more complex scheduling policies, you can provide a QueueClass in the options:
-
-```js
-class QueueClass {
-	constructor() {
-		this._queue = [];
-	}
-
-	enqueue(run, options) {
-		this._queue.push(run);
-	}
-
-	dequeue() {
-		return this._queue.shift();
-	}
-
-	get size() {
-		return this._queue.length;
-	}
-
-	filter(options) {
-		return this._queue;
-	}
-}
-
-const queue = new PQueue({
-	queueClass: QueueClass
-});
-```
