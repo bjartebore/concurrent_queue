@@ -616,6 +616,214 @@ void main() {
     expect(queue.size, 1);
   });
 
+  test('should emit active event per item', () async {
+    final items = [0, 1, 2, 3, 4];
+    final queue = ConcurrentQueue();
+
+    int eventCount = 0;
+    queue.on(QueueEventAction.active, (_) {
+      eventCount++;
+    });
+
+    for (final item in items) {
+      queue.add(() async => item);
+    }
+
+    queue.start();
+    await queue.onIdle();
+
+    expect(eventCount, items.length);
+  });
+
+test('should emit idle event when idle', () async {
+	final queue = ConcurrentQueue(concurrency: 1);
+
+	int timesCalled = 0;
+	queue.on(QueueEventAction.idle, (_) {
+		timesCalled++;
+	});
+
+	final job1 = queue.add(() async => delay(100));
+	final job2 = queue.add(() async => delay(100));
+
+	expect(queue.pending, 1);
+	expect(queue.size, 1);
+	expect(timesCalled, 0);
+
+	await job1;
+
+	expect(queue.pending, 1);
+	expect(queue.size, 0);
+	expect(timesCalled, 0);
+
+	await job2;
+
+	expect(queue.pending, 0);
+	expect(queue.size, 0);
+	expect(timesCalled, 1);
+
+	final job3 = queue.add(() async => delay(100));
+
+	expect(queue.pending, 1);
+	expect(queue.size, 0);
+	expect(timesCalled, 1);
+
+	await job3;
+	expect(queue.pending, 0);
+	expect(queue.size, 0);
+	expect(timesCalled, 2);
+});
+
+test('should emit add event when adding task', () async {
+	final queue = ConcurrentQueue(concurrency: 1);
+
+	int timesCalled = 0;
+	queue.on(QueueEventAction.add, (_) {
+		timesCalled++;
+	});
+
+	final job1 = queue.add(() async => delay(100));
+
+	expect(queue.pending, 1);
+	expect(queue.size, 0);
+	expect(timesCalled, 1);
+
+	final job2 = queue.add(() async => delay(100));
+
+	expect(queue.pending, 1);
+	expect(queue.size, 1);
+	expect(timesCalled, 2);
+
+	await job1;
+
+	expect(queue.pending, 1);
+	expect(queue.size, 0);
+	expect(timesCalled, 2);
+
+	await job2;
+
+	expect(queue.pending, 0);
+	expect(queue.size, 0);
+	expect(timesCalled, 2);
+
+	final job3 = queue.add(() async => delay(100));
+
+	expect(queue.pending, 1);
+	expect(queue.size, 0);
+	expect(timesCalled, 3);
+
+	await job3;
+	expect(queue.pending, 0);
+	expect(queue.size, 0);
+	expect(timesCalled, 3);
+});
+
+test('should emit next event when completing task', () async {
+	final queue = ConcurrentQueue(concurrency: 1);
+
+	int timesCalled = 0;
+	queue.on(QueueEventAction.next, (_) {
+		timesCalled++;
+	});
+
+	final job1 = queue.add(() async => delay(100));
+
+	expect(queue.pending, 1);
+	expect(queue.size, 0);
+	expect(timesCalled, 0);
+
+	final job2 = queue.add(() async => delay(100));
+
+	expect(queue.pending, 1);
+	expect(queue.size, 1);
+	expect(timesCalled, 0);
+
+	await job1;
+
+	expect(queue.pending, 1);
+	expect(queue.size, 0);
+	expect(timesCalled, 1);
+
+	await job2;
+
+	expect(queue.pending, 0);
+	expect(queue.size, 0);
+	expect(timesCalled, 2);
+
+	final job3 = queue.add(() async => delay(100));
+
+	expect(queue.pending, 1);
+	expect(queue.size, 0);
+	expect(timesCalled, 2);
+
+	await job3;
+	expect(queue.pending, 0);
+	expect(queue.size, 0);
+	expect(timesCalled, 3);
+});
+
+test('should emit completed / error events', () async {
+	final queue = ConcurrentQueue(concurrency: 1);
+
+	int errorEvents = 0;
+	int completedEvents = 0;
+	queue.on(QueueEventAction.error, (_) {
+		errorEvents++;
+	});
+	queue.on(QueueEventAction.completed, (_){
+		completedEvents++;
+	});
+
+	final job1 = queue.add(() async => delay(100));
+
+	expect(queue.pending, 1);
+	expect(queue.size, 0);
+	expect(errorEvents, 0);
+	expect(completedEvents, 0);
+
+	final job2 = queue.add(() async {
+		await delay(1);
+		throw Exception('failure');
+	});
+
+	expect(queue.pending, 1);
+	expect(queue.size, 1);
+	expect(errorEvents, 0);
+	expect(completedEvents, 0);
+
+	await job1;
+
+	expect(queue.pending, 1);
+	expect(queue.size, 0);
+	expect(errorEvents, 0);
+	expect(completedEvents, 1);
+
+  try {
+    await job2;
+  } on Exception catch (error) {
+    expect(error, isA<Exception>());
+  }
+
+	expect(queue.pending, 0);
+	expect(queue.size, 0);
+	expect(errorEvents, 1);
+	expect(completedEvents, 1);
+
+	final job3 = queue.add(() async => delay(100));
+
+	expect(queue.pending, 1);
+	expect(queue.size, 0);
+	expect(errorEvents, 1);
+	expect(completedEvents, 1);
+
+	await job3;
+	expect(queue.pending, 0);
+	expect(queue.size, 0);
+	expect(errorEvents, 1);
+	expect(completedEvents, 2);
+});
+
+
   test('should verify timeout overrides passed to add', () async {
     final queue = ConcurrentQueue(
       throwOnTimeout: true,

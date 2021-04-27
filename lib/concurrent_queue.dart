@@ -1,6 +1,7 @@
 library concurrent_queue;
 
 import 'dart:async';
+import 'package:rxdart/rxdart.dart';
 import 'priority_queue.dart';
 
 export 'priority_queue.dart';
@@ -9,7 +10,25 @@ typedef Future<T> Task<T>();
 
 typedef void ResolveFunction<T>();
 
-void empty() {}
+void _empty() {}
+
+class QueueEvent {
+  QueueEvent(this.action, {
+    this.result,
+  });
+
+  QueueEventAction action;
+  dynamic? result;
+}
+
+enum QueueEventAction {
+  active,
+  idle,
+  add,
+  next,
+  completed,
+  error,
+}
 
 class ConcurrentQueue {
 
@@ -30,7 +49,8 @@ class ConcurrentQueue {
     _interval = interval,
     _queue = PriorityQueue(),
     _concurrency = concurrency,
-    _isPaused = autoStart == false;
+    _isPaused = autoStart == false,
+    _eventStream = PublishSubject<QueueEvent>( sync: true );
 
   final bool _carryoverConcurrencyCount;
 
@@ -60,9 +80,9 @@ class ConcurrentQueue {
 
   bool _isPaused;
 
-  ResolveFunction _resolveEmpty = empty;
+  ResolveFunction _resolveEmpty = _empty;
 
-  ResolveFunction _resolveIdle = empty;
+  ResolveFunction _resolveIdle = _empty;
 
   bool get _doesIntervalAllowAnother {
     return _isIntervalIgnored || _intervalCount < _intervalCap;
@@ -72,19 +92,34 @@ class ConcurrentQueue {
     return _pendingCount < _concurrency;
   }
 
+  PublishSubject<QueueEvent> _eventStream;
+
+  Stream<QueueEvent> get eventStream => _eventStream.stream;
+
+  void emit(QueueEventAction event, [dynamic result]) {
+    _eventStream.add(QueueEvent(event, result: result));
+  }
+
+  StreamSubscription on(QueueEventAction action, void Function(QueueEvent) event) {
+    return _eventStream
+      .where((event) => event.action == action)
+      .listen(event);
+  }
+
   void _next() {
     _pendingCount -= 1;
     _tryToStartAnother();
+    emit(QueueEventAction.next);
   }
 
   void _resolvePromises() {
     _resolveEmpty();
-    _resolveEmpty = empty;
+    _resolveEmpty = _empty;
 
     if (_pendingCount == 0) {
       _resolveIdle();
-      _resolveIdle = empty;
-      // emit('idle');
+      _resolveIdle = _empty;
+      emit(QueueEventAction.idle);
     }
   }
 
@@ -129,13 +164,13 @@ class ConcurrentQueue {
 
       bool canInitializeInterval = !_isIntervalPaused();
       if (_doesIntervalAllowAnother && _doesConcurrentAllowAnother) {
-        //this.emit('active');
         final job = _queue.dequeue();
 
         if (job == null) {
           return false;
         }
 
+        emit(QueueEventAction.active);
         job();
 
         if (canInitializeInterval) {
@@ -227,17 +262,23 @@ class ConcurrentQueue {
             } as FutureOr<T> Function()?
           );
 
-        c.complete(await operation);
+        final result = await operation;
+        emit(QueueEventAction.completed, result);
+        c.complete(result);
       } on TimeoutException catch (error) {
+        emit(QueueEventAction.error, error);
         c.completeError(error);
       } catch (error) {
+        emit(QueueEventAction.error, error);
         c.completeError(error);
-      } finally {
-        _next();
       }
+      _next();
+      int a = 1;
 
     }, priority: priority);
     _tryToStartAnother();
+
+    emit(QueueEventAction.add);
     return c.future;
   }
 

@@ -7,5 +7,8 @@ homepage: https://github.com/bjartebore/concurrent_queue
 environment:
   sdk: '>=2.12.0 <3.0.0'
 
+dependencies:
+  rxdart: ^0.26.0
+
 dev_dependencies:
   test: ^1.16.5
