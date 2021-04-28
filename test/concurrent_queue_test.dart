@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:concurrent_queue/queue.dart';
 import 'package:test/test.dart';
 import 'package:concurrent_queue/concurrent_queue.dart';
 
@@ -16,7 +17,7 @@ void main() {
   test('.add()', () async {
     var queue = new ConcurrentQueue();
 
-    Future future = queue.add<int>(() async => 123);
+    final future = queue.add<int>(() async => 123);
 
     expect(queue.size, equals(0));
     expect(queue.pending, equals(1));
@@ -798,11 +799,9 @@ test('should emit completed / error events', () async {
 	expect(errorEvents, 0);
 	expect(completedEvents, 1);
 
-  try {
+  await expectLater(() async {
     await job2;
-  } on Exception catch (error) {
-    expect(error, isA<Exception>());
-  }
+  }, throwsException);
 
 	expect(queue.pending, 0);
 	expect(queue.size, 0);
@@ -839,6 +838,103 @@ test('should emit completed / error events', () async {
     }), equals(null));
 
     await queue.onIdle();
+  });
+
+
+  test('.remove() by key', () async {
+    var queue = new ConcurrentQueue( concurrency:  1, autoStart: false );
+
+    queue.add<int>(() async => 123);
+    queue.add<int>(() async => 123, key: 'deleteMe');
+    queue.add<int>(() async => 123);
+
+    expect(queue.size, equals(3));
+    expect(queue.pending, equals(0));
+
+    queue.remove('deleteMe');
+
+    expect(queue.size, equals(2));
+    expect(queue.pending, equals(0));
+  });
+
+
+  test('.remove() by key while running', () async {
+    var queue = new ConcurrentQueue( concurrency:  1 );
+
+    queue.add(() async {
+      await delay(300);
+      return 123;
+    });
+    queue.add(() async {
+      await delay(300);
+    }, key: 'deleteMe');
+    queue.add(() async => 123);
+
+    expect(queue.size, equals(2));
+    expect(queue.pending, equals(1));
+
+    final item = queue.remove('deleteMe');
+
+    expect(item, isA<RunFunction>());
+    expect(queue.size, equals(1));
+    expect(queue.pending, equals(1));
+  });
+
+  test('.remove() unprocessed key', () async {
+    var queue = new ConcurrentQueue( concurrency:  1, autoStart: false );
+
+    queue.add<int>(() async => 123);
+    queue.add<int>(() async => 123);
+    queue.add<int>(() async => 123);
+
+    expect(queue.size, equals(3));
+    expect(queue.pending, equals(0));
+
+    final item = queue.remove('deleteMe');
+
+    expect(item, isNull);
+    expect(queue.size, equals(3));
+    expect(queue.pending, equals(0));
+  });
+
+  test('.remove() should emit remove event', () async {
+    var queue = new ConcurrentQueue( concurrency: 1, autoStart: false );
+    int removedEvents = 0;
+
+    queue.on(QueueEventAction.remove, (_){
+      removedEvents++;
+    });
+
+    queue.add<int>(() async => 123);
+    queue.add<int>(() async => 123, key: "delete1");
+    queue.add<int>(() async => 123, key: "delete2");
+
+    expect(queue.size, equals(3));
+    expect(queue.pending, equals(0));
+
+    final item = queue.remove('delete1');
+    final item2 = queue.remove('delete2');
+
+    expect(item, isA<RunFunction>());
+    expect(item2, isA<RunFunction>());
+    expect(queue.size, equals(1));
+    expect(queue.pending, equals(0));
+    expect(removedEvents, 2);
+  });
+
+  test('.add() should throw exception when key is allready in use', () async {
+    var queue = new ConcurrentQueue( concurrency: 1, autoStart: false );
+
+    queue.add<int>(() async => 123);
+    queue.add<int>(() async => 123, key: "delete1");
+    final task = queue.add<int>(() async => 123, key: "delete1");
+
+    expect(queue.size, equals(2));
+    expect(queue.pending, equals(0));
+
+    await expectLater(() async {
+      return await task;
+    }, throwsException);
   });
 }
 

@@ -1,6 +1,7 @@
 library concurrent_queue;
 
 import 'dart:async';
+import 'package:concurrent_queue/queue.dart';
 import 'package:rxdart/rxdart.dart';
 import 'priority_queue.dart';
 
@@ -26,6 +27,7 @@ enum QueueEventAction {
   idle,
   add,
   next,
+  remove,
   completed,
   error,
 }
@@ -243,10 +245,11 @@ class ConcurrentQueue {
   Future<T> add<T>(
     Task<T> task, {
       int priority = 0,
+      String? key,
     }) async {
 
     final c = Completer<T>();
-    _queue.enqueue(() async {
+    final job = () async {
       _pendingCount += 1;
       _intervalCount += 1;
 
@@ -273,15 +276,28 @@ class ConcurrentQueue {
         c.completeError(error);
       }
       _next();
-      int a = 1;
+    };
 
-    }, priority: priority);
+    try {
+      _queue.enqueue(job, priority: priority, key: key);
+      emit(QueueEventAction.add);
+    } catch (error) {
+      emit(QueueEventAction.error, error);
+      c.completeError(error);
+    }
+
     _tryToStartAnother();
 
-    emit(QueueEventAction.add);
     return c.future;
   }
 
+  RunFunction? remove(
+    dynamic key,
+  ) {
+    final job = _queue.dequeue(key: key);
+    emit(QueueEventAction.remove);
+    return job;
+  }
 
   ConcurrentQueue start() {
 
