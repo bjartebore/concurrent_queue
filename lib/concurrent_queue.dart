@@ -245,7 +245,7 @@ class ConcurrentQueue {
   Future<T> add<T>(
     Task<T> task, {
       int priority = 0,
-      String? key,
+      dynamic? key,
     }) async {
 
     final c = Completer<T>();
