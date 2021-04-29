@@ -299,6 +299,10 @@ class ConcurrentQueue {
     return job;
   }
 
+  int indexOf(dynamic key) {
+    return _queue.indexOf(key);
+  }
+
   ConcurrentQueue start() {
 
     if (!_isPaused) {

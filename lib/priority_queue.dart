@@ -9,7 +9,7 @@ class _PriorityQueueOptions
 
   RunFunction? run;
 
-  String? key;
+  dynamic? key;
 }
 
 class PriorityQueue implements IQueue<RunFunction?, _PriorityQueueOptions>{
@@ -69,6 +69,13 @@ class PriorityQueue implements IQueue<RunFunction?, _PriorityQueueOptions>{
     }
 
     return item?.run;
+  }
+
+  int indexOf(dynamic key) {
+    if (_map.containsKey(key)) {
+      return _queue.indexOf(_map[key]!);
+    }
+    return -1;
   }
 
   @override

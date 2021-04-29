@@ -3,8 +3,10 @@ typedef Future<dynamic> RunFunction();
 abstract class IQueue<IRunFunction, IOptions> {
   int get size;
   List<IRunFunction> filter(int priority);
-  IRunFunction dequeue();
+  IRunFunction dequeue({ dynamic? key });
   void enqueue(IRunFunction run, {
-    int priority
+    int priority,
+    dynamic? key
   });
+  int indexOf(dynamic key);
 }
