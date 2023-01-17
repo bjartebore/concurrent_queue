@@ -7,8 +7,6 @@ import 'priority_queue.dart';
 
 export 'priority_queue.dart';
 
-typedef Future<T> Task<T>();
-
 typedef void ResolveFunction<T>();
 
 void _empty() {}
@@ -19,7 +17,7 @@ class QueueEvent {
   });
 
   QueueEventAction action;
-  dynamic? result;
+  dynamic result;
 }
 
 enum QueueEventAction {
@@ -231,21 +229,25 @@ class ConcurrentQueue {
   Duration get timeout => _timeout!;
 
   Future<List<T>> addAll<T>(
-    List<Task<T>> tasks, {
+    List<Function> tasks, {
       int priority = 0,
+      List<dynamic>? positionalArguments,
+      Map<Symbol, dynamic>? namedArguments
     }
   ) {
     final waitFor = tasks.map((task) {
-      return add(task, priority: priority);
+      return add<T>(task, priority: priority,positionalArguments: positionalArguments, namedArguments: namedArguments);
     }).toList();
 
     return Future.wait(waitFor);
   }
 
   Future<T> add<T>(
-    Task<T> task, {
+    Function task, {
       int priority = 0,
-      dynamic? key,
+      dynamic key,
+      List<dynamic>? positionalArguments,
+      Map<Symbol, dynamic>? namedArguments
     }) async {
 
     final c = Completer<T>();
@@ -255,8 +257,8 @@ class ConcurrentQueue {
 
       try {
         final operation = (_timeout == Duration.zero)
-          ? task()
-          : task().timeout(_timeout!,
+          ? Function.apply(task, positionalArguments, namedArguments)
+          : (Function.apply(task, positionalArguments, namedArguments) as Future<T>).timeout(_timeout!,
             onTimeout: () {
               if (_throwOnTimeout) {
                 throw TimeoutException('task timed out');
