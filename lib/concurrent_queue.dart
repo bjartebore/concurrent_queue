@@ -19,7 +19,7 @@ class QueueEvent {
   });
 
   QueueEventAction action;
-  dynamic? result;
+  dynamic result;
 }
 
 enum QueueEventAction {
@@ -245,7 +245,7 @@ class ConcurrentQueue {
   Future<T> add<T>(
     Task<T> task, {
       int priority = 0,
-      dynamic? key,
+      dynamic key,
     }) async {
 
     final c = Completer<T>();

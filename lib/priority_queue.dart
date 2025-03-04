@@ -9,7 +9,7 @@ class _PriorityQueueOptions
 
   RunFunction? run;
 
-  dynamic? key;
+  dynamic key;
 }
 
 class PriorityQueue implements IQueue<RunFunction?, _PriorityQueueOptions>{
@@ -22,7 +22,7 @@ class PriorityQueue implements IQueue<RunFunction?, _PriorityQueueOptions>{
   final _map = <dynamic, _PriorityQueueOptions>{};
 
   @override
-  void enqueue(run, { int priority = 0, dynamic? key }) {
+  void enqueue(run, { int priority = 0, dynamic key }) {
 
     _PriorityQueueOptions element = _PriorityQueueOptions(
       priority,
@@ -52,7 +52,7 @@ class PriorityQueue implements IQueue<RunFunction?, _PriorityQueueOptions>{
 
 
   @override
-  RunFunction? dequeue({ dynamic? key }) {
+  RunFunction? dequeue({ dynamic key }) {
     _PriorityQueueOptions? item;
 
     if (key != null) {
