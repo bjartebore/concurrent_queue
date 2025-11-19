@@ -36,9 +36,9 @@ class ConcurrentQueue {
 
   ConcurrentQueue({
     bool autoStart = true,
-    int concurrency = 1<<32,
+    int? concurrency,
     Duration interval = Duration.zero,
-    int intervalCap = 1<<32,
+    int? intervalCap,
     bool carryoverConcurrencyCount = false,
     Duration timeout = Duration.zero,
     bool throwOnTimeout = false,
@@ -47,10 +47,10 @@ class ConcurrentQueue {
     _isIntervalIgnored = intervalCap == double.infinity || interval == Duration.zero,
     _timeout = timeout,
     _throwOnTimeout = throwOnTimeout,
-    _intervalCap = intervalCap,
+    _intervalCap = intervalCap ?? double.maxFinite.toInt(),
     _interval = interval,
     _queue = PriorityQueue(),
-    _concurrency = concurrency,
+    _concurrency = concurrency ?? double.maxFinite.toInt(),
     _isPaused = autoStart == false,
     _eventStream = PublishSubject<QueueEvent>( sync: true );
 
